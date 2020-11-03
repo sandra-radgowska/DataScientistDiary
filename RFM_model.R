@@ -49,13 +49,12 @@ df <- df %>% filter(InvoiceDate > "2010-12-09 12:50:00")
 
 # 3. RFM modelling --------------------------------------------------------------------------------------------
 # a. manually -------------------------------------------------------------------------------------------------
-
 # Adding MonetaryValue
 df <- df %>%
-  mutate(MonetaryValue = Quantity + UnitPrice)
+  mutate(MonetaryValue = Quantity * UnitPrice)
 
 # Adding Recency
-df <- df %>% mutate(Recency = difftime(today, InvoiceDate, unit = "days")) # czy napewno dobrze?
+df <- df %>% mutate(Recency = difftime(today, InvoiceDate, unit = "days")) 
 
 # Adding Freqency
 agg_df <- df %>%
@@ -95,15 +94,14 @@ set.seed(1234)
 nc <- NbClust(transf_df, min.nc = 2, max.nc = 20, method = "kmeans")
 table(nc$Best.n[1, ])
 
-# * Among all indices:
-#   * 10 proposed 2 as the best number of clusters
-# * 1 proposed 3 as the best number of clusters
-# * 7 proposed 4 as the best number of clusters
-# * 1 proposed 7 as the best number of clusters
-# * 1 proposed 11 as the best number of clusters
-# * 1 proposed 12 as the best number of clusters
-# * 1 proposed 17 as the best number of clusters
-# * 2 proposed 20 as the best number of clusters
+# * Among all indices:                                                
+#   9 proposed 2 as the best number of clusters 
+# * 1 proposed 3 as the best number of clusters 
+# * 6 proposed 4 as the best number of clusters 
+# * 2 proposed 13 as the best number of clusters 
+# * 1 proposed 16 as the best number of clusters 
+# * 2 proposed 19 as the best number of clusters 
+# * 3 proposed 20 as the best number of clusters 
 
 # According to the majority rule, the best number of clusters is 2. Another good type is 4 clusters.
 # Let's test both solutions.
@@ -114,12 +112,12 @@ set.seed(1234)
 km.res <- kmeans(transf_df, 2, nstart = 25)
 km.res
 
-# K-means clustering with 2 clusters of sizes 2165, 2105
-
+# K-means clustering with 2 clusters of sizes 2180, 2090
+# 
 # Cluster means:
 #   r        f        m
-# 1 3.199538 1.612471 1.643880
-# 2 1.780523 3.389074 3.380523
+# 1 3.195413 1.636697 1.669725
+# 2 1.774641 3.376555 3.366029
 
 # Segment 	Description 	R 	F 	M
 # Champions 	Bought recently, buy often and spend the most 	4 – 5 	4 – 5 	4 – 5
@@ -135,7 +133,7 @@ km.res
 # Lost 	Lowest recency, frequency & monetary scores 	<= 2 	<= 2 	<= 2
 
 # According to the table we can divide customers into:
-# 1st cluster: Loyal customers
+# 1st cluster: Potential Loyalist 	Recent customers, spent good amount, bought more than once
 # 2 cluster: At risk customers
 
 # It’s possible to compute the mean of each variables by clusters using the original data:
@@ -146,23 +144,24 @@ set.seed(1234)
 km.res <- kmeans(transf_df, 4, nstart = 25)
 km.res
 
-# K-means clustering with 4 clusters of sizes 1361, 790, 774, 1345
-#
+# K-means clustering with 4 clusters of sizes 775, 1336, 1360, 799
+# 
 # Cluster means:
 #   r        f        m
-# 1 3.603968 1.434240 1.451139
-# 2 1.624051 1.822785 1.787342
-# 3 3.317829 3.051680 3.129199
-# 4 1.426766 3.621561 3.617844
+# 1 3.299355 3.002581 3.153548
+# 2 1.424401 3.615269 3.583832
+# 3 3.614706 1.461029 1.478676
+# 4 1.625782 1.853567 1.792240
 
 # According to the table we can divide customers into:
-# 1st cluster: Potential Loyalist 	Recent customers, spent good amount, bought more than once
-# 2nd cluster:  Hibernating 	Low spenders, low frequency, purchased long time ago
-# 3rd cluster: Loyal Customers 	Spend good money. Responsive to promotions
-# 4th cluster: At Risk 	Spent big money, purchased often but long time ago
+# 1st cluster: Loyal Customers 	Spend good money. Responsive to promotions
+# 2nd cluster: At Risk 	Spent big money, purchased often but long time ago
+# 3rd cluster: Potential Loyalist 	Recent customers, spent good amount, bought more than once
+# 4th cluster: Hibernating 	Low spenders, low frequency, purchased long time ago
 
 # It’s possible to compute the mean of each variables by clusters using the original data:
 aggregate(agg_df, by = list(cluster = km.res$cluster), mean) %>% select(-CustomerID)
+
 
 # b. with rfm package ------------------------------------------------------------------------------------------
 str(df)
